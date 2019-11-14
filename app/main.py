@@ -2,11 +2,12 @@ import argparse
 import time
 
 from webdriver.webdriver import WebDriver
-from tools import dummy_tool
+from tools.dummy_tool import DummyTool
+from tools.triangle_detection import TriangleDetector
+import cv2
 
 
-def main(url: str, buffer_time: int):
-	tools = [dummy_tool]
+def main(url: str, buffer_time: int, tools: list, **kwargs):
 	web_driver = WebDriver(url)
 	region = None
 	playing = False
@@ -30,9 +31,28 @@ def main(url: str, buffer_time: int):
 		playing = web_driver.is_playing()
 
 
-if __name__ == '__main__':
+def parse_arguments():
 	parser = argparse.ArgumentParser('Amaro Pargo, the corsair of the seven seas')
 	parser.add_argument('url', type=str)
-	parser.add_argument('buffer_time', type=int)
-	args = parser.parse_args()
-	main(args.url, args.buffer_time)
+	parser.add_argument('--buffer_time', type=int, default=3)
+	parser.add_argument('--binarization', 
+						type=str, 
+						choices=['gt','amt','agt'],
+						default='agt',
+						help='gt: Global Thresholding\namt: Adaptive Mean Thresholding\nagt: Adaptive Gaussian Thresholding')
+	parser.add_argument('--triangle_size', type=str, choices=['small','medium','big'], default='medium')
+	return vars(parser.parse_args())
+	
+
+def set_up_tools(binarization: str, triangle_size: str, **kwargs):
+	tools = []
+	tools.append(DummyTool())
+	tools.append(TriangleDetector(binarization, triangle_size))
+	kwargs['tools'] = tools
+	return kwargs
+
+
+if __name__ == '__main__':
+	arguments = parse_arguments()
+	arguments = set_up_tools(**arguments)
+	main(**arguments)
