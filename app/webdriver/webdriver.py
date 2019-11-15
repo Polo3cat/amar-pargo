@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -11,7 +12,11 @@ import cv2
 
 _MOZ_LOG_DIR = 'logs/'
 _MOZ_LOG_FILE = os.path.join(_MOZ_LOG_DIR, 'firefox.log')
-print(_MOZ_LOG_FILE)
+
+class FirefoxLoggigError(Exception):
+	def __init__(self,message):
+		self.message = message
+
 
 class WebDriver:
 	def __init__(self, url: str):
@@ -35,7 +40,6 @@ class WebDriver:
 
 	def __del__(self):
 		self.driver.quit()
-		logging.info('Closed webdriver window.')
 
 	def take_screenshot(self, region):
 		screenshot = self.driver.get_screenshot_as_png()
@@ -52,5 +56,21 @@ class WebDriver:
 		actions.perform()
 
 	def is_playing(self):
-		return False
+		try:
+			logfiles = os.listdir(_MOZ_LOG_DIR)
+		except OSError as e:
+			logging.exception(e)
+			raise FirefoxLoggigError(f"Logging dir {_MOZ_LOG_DIR} does not exist")
 		
+		if not logfiles:
+			raise FirefoxLoggigError(f"No logging files in {_MOZ_LOG_DIR}")
+		
+		regexp = re.compile(r'((http|https)://)?(\w+\.)+\w+(/\w+)*/(\w+\.)+mp4')
+
+		for logfile in logfiles:
+			filename = os.path.join(_MOZ_LOG_DIR, logfile)
+			with open(filename, 'r') as file:
+				match = regexp.search(file.read())
+			if match:
+				return match.group(0)
+		return False

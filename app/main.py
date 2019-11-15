@@ -2,7 +2,7 @@ import argparse
 import time
 import logging
 
-from webdriver.webdriver import WebDriver
+from webdriver.webdriver import WebDriver, FirefoxLoggigError
 from tools.dummy_tool import DummyTool
 from tools.triangle_detection import TriangleDetector
 import cv2
@@ -17,9 +17,13 @@ logging.basicConfig(format=FORMAT, level=logging.INFO)
 def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 	web_driver = WebDriver(url)
 	region = None
-	playing = False
 	give_up = False
 	nothing = 0
+	try:
+		playing = web_driver.is_playing()
+	except FirefoxLoggigError as e:
+		raise e
+
 	while not playing and not give_up:
 		screenshot = web_driver.take_screenshot(region)
 		high_score = 0
@@ -44,13 +48,17 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 		except AttributeError as e:
 			logging.info('No tools loaded -- Are we in debug mode?')
 
-		time.sleep(buffer_time)
-		playing = web_driver.is_playing()
 		give_up = nothing > patience
+		time.sleep(buffer_time)
+		try:
+			playing = web_driver.is_playing()
+		except FirefoxLoggigError as e:
+			raise e
+
 	if give_up:
 		logging.info('We gave up')
-	else:
-		logging.info('The video is playing')
+	if playing:
+		logging.info(f'The video is playing from {playing}')
 
 
 def parse_arguments():
