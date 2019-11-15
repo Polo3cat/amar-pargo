@@ -16,6 +16,9 @@ logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
 def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
+	"""
+		Orchestrates the pipeline responsible for playing and detecting a video playing
+	"""
 	web_driver = WebDriver(url)
 	region = None
 	give_up = False
@@ -59,7 +62,7 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 	if give_up:
 		logging.info('We gave up')
 	if playing:
-		logging.info(f'The video is playing from {playing}')
+		logging.info(f'The video is very likely playing from {playing}')
 
 
 def parse_arguments():

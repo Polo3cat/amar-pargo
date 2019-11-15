@@ -65,12 +65,20 @@ class WebDriver:
 		if not logfiles:
 			raise FirefoxLoggigError(f"No logging files in {_MOZ_LOG_DIR}")
 		
-		regexp = re.compile(r'((http|https)://)?(\w+\.)+\w+(/\w+)*/(\w+((_|-)+\w+)*\.)+(mp4|flv|mov|avi|mkv|webm)')
-
+		hosted_file_regexp = re.compile(r'((http|https)://)?(\w+\.)+\w+(/\w+)*/(\w+((_|-)+\w+)*\.)+(mp4|flv|mov|avi|mkv|webm)')
+		youtube_regexp = re.compile(r'(\w|-)+\.googlevideo.com/videoplayback')
+		
 		for logfile in logfiles:
 			filename = os.path.join(_MOZ_LOG_DIR, logfile)
 			with open(filename, 'r') as file:
-				match = regexp.search(file.read())
+				log = file.read()
+				match = hosted_file_regexp.search(log)
+				youtube_match = youtube_regexp.search(log)
 			if match:
 				return match.group(0)
+			elif youtube_match:
+				youtube_id_regex = re.compile(r'video_id=(?P<youtube_id>(\w|_)+)&')
+				youtube_id_match = youtube_id_regex.search(log)
+				youtube_id = youtube_id_match.group('youtube_id')
+				return f'https://www.youtube.com/watch?v={youtube_id}'
 		return False
