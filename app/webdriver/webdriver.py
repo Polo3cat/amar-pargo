@@ -65,7 +65,7 @@ class WebDriver:
 		if not logfiles:
 			raise FirefoxLoggigError(f"No logging files in {_MOZ_LOG_DIR}")
 		
-		regexp = re.compile(r'((http|https)://)?(\w+\.)+\w+(/\w+)*/(\w+\.)+mp4')
+		regexp = re.compile(r'((http|https)://)?(\w+\.)+\w+(/\w+)*/(\w+((_|-)+\w+)*\.)+(mp4|flv|mov|avi|mkv|webm)')
 
 		for logfile in logfiles:
 			filename = os.path.join(_MOZ_LOG_DIR, logfile)
