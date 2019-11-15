@@ -1,19 +1,42 @@
+import logging
+import os
+
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 import numpy as np
 import cv2
 
 
+_MOZ_LOG_DIR = 'logs/'
+_MOZ_LOG_FILE = os.path.join(_MOZ_LOG_DIR, 'firefox.log')
+print(_MOZ_LOG_FILE)
+
 class WebDriver:
 	def __init__(self, url: str):
+		try:
+			logfiles = os.listdir(_MOZ_LOG_DIR)
+			for logfile in logfiles:
+				os.remove( os.path.join(_MOZ_LOG_DIR,logfile) )
+		except OSError:
+			os.mkdir(_MOZ_LOG_DIR)
+
 		self.url = url
 		firefox_options = Options()
 		firefox_options.add_argument('--width=1920')
 		firefox_options.add_argument('--height=1080')
+
+		firefox_options.add_argument(f'-MOZ_LOG_FILE={_MOZ_LOG_FILE}')
+		firefox_options.add_argument('-MOZ_LOG=timestamp,rotate:200,nsHttp:1')
+
 		self.driver = webdriver.Firefox(options=firefox_options)
 		self.driver.get(url)
+
+	def __del__(self):
+		self.driver.quit()
+		logging.info('Closed webdriver window.')
 
 	def take_screenshot(self, region):
 		screenshot = self.driver.get_screenshot_as_png()
@@ -30,8 +53,5 @@ class WebDriver:
 		actions.perform()
 
 	def is_playing(self):
-		return True
-
-	def __del__(self):
-		self.driver.quit()
+		return False
 		
