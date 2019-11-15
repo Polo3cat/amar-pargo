@@ -41,6 +41,8 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 		except NothingError as e:
 			logging.info(e)
 			nothing += 1
+		except AttributeError as e:
+			logging.info('No tools loaded -- Are we in debug mode?')
 
 		time.sleep(buffer_time)
 		playing = web_driver.is_playing()
@@ -62,13 +64,15 @@ def parse_arguments():
 						help='gt: Global Thresholding\namt: Adaptive Mean Thresholding\nagt: Adaptive Gaussian Thresholding')
 	parser.add_argument('--triangle_size', type=str, choices=['small','medium','big'], default='medium')
 	parser.add_argument('--patience', type=int, default=3, help='Consecutive times that tools can report as having done nothing')
+	parser.add_argument('--debug', action='store_true')
 	return vars(parser.parse_args())
 	
 
-def set_up_tools(binarization: str, triangle_size: str, **kwargs):
+def set_up_tools(binarization: str, triangle_size: str, debug: bool, **kwargs):
 	tools = []
-	tools.append(DummyTool())
-	tools.append(TriangleDetector(binarization, triangle_size))
+	if not debug:
+		tools.append(DummyTool())
+		tools.append(TriangleDetector(binarization, triangle_size))
 	kwargs['tools'] = tools
 	return kwargs
 
