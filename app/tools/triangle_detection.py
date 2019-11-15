@@ -1,6 +1,8 @@
 from math import sqrt
 import cv2
 
+from .tool import NothingError, Tool
+
 
 class BinarizationMethodError(Exception):
 	pass
@@ -9,8 +11,9 @@ class TriangleSizeError(Exception):
 	pass
 
 
-class TriangleDetector:
+class TriangleDetector(Tool):
 	def __init__(self, binarization, triangle_size):
+		super().__init__()
 		if binarization == 'gt':
 			self.threshold = lambda img: cv2.threshold(img,127,255,cv2.THRESH_BINARY)
 		elif binarization == 'amt':
@@ -74,7 +77,10 @@ class TriangleDetector:
 			filtered_triangles.append((triangle, difference))
 		total = sum((difference for _,difference in filtered_triangles))
 		softmaxed = ((triangle, difference/total) for triangle,difference in filtered_triangles)
-		return min(softmaxed, key=lambda x: x[1])
+		try:
+			return min(softmaxed, key=lambda x: x[1])
+		except ValueError:
+			return (None, 1)
 
 
 	def evaluate(self, screenshot):
@@ -93,6 +99,8 @@ class TriangleDetector:
 			We 'click' on the best scoring triangle
 		"""
 		triangle, _ = self.best_softmaxed_triangle(screenshot)
+		if triangle is None:
+			raise NothingError('No triangles passed the filters')
 		p1 = (triangle[0,0,0],triangle[0,0,1])
 		p2 = (triangle[1,0,0],triangle[1,0,1])
 		p3 = (triangle[2,0,0],triangle[2,0,1])

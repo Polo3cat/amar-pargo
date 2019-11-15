@@ -1,4 +1,6 @@
-class DummyTool:
+from .tool import Tool
+
+class DummyTool(Tool):
 	def __init__(self):
 		pass
 
