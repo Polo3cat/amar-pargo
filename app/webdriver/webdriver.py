@@ -4,7 +4,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 import numpy as np
 import cv2
