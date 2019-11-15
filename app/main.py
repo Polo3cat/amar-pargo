@@ -5,6 +5,7 @@ import logging
 from webdriver.webdriver import WebDriver, FirefoxLoggigError
 from tools.dummy_tool import DummyTool
 from tools.triangle_detection import TriangleDetector
+from tools.debug_tool import DebugTool
 import cv2
 
 from tools.tool import NothingError
@@ -46,7 +47,7 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 			logging.info(e)
 			nothing += 1
 		except AttributeError as e:
-			logging.info('No tools loaded -- Are we in debug mode?')
+			logging.exception(e)
 
 		give_up = nothing > patience
 		time.sleep(buffer_time)
@@ -78,7 +79,10 @@ def parse_arguments():
 
 def set_up_tools(binarization: str, triangle_size: str, debug: bool, **kwargs):
 	tools = []
-	if not debug:
+	if debug:
+		logging.info('Debug mode --- Loading only Debug Tool')
+		tools.append(DebugTool())
+	else:
 		tools.append(DummyTool())
 		tools.append(TriangleDetector(binarization, triangle_size))
 	kwargs['tools'] = tools
