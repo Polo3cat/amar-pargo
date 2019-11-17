@@ -1,10 +1,13 @@
 import logging
 import os
 import re
+import sys
+import time
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 import numpy as np
 import cv2
@@ -36,6 +39,8 @@ class WebDriver:
 		firefox_options.add_argument('-MOZ_LOG=timestamp,rotate:200,nsHttp:1')
 
 		self.driver = webdriver.Firefox(options=firefox_options)
+		uBlock_path = os.path.join(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)), 'addons/uBlock0_1.23.1rc1.firefox.signed.xpi')
+		self.driver.install_addon(uBlock_path)
 		self.driver.get(url)
 
 	def __del__(self):
@@ -49,10 +54,10 @@ class WebDriver:
 		return grey_image
 	
 	def click(self, coords):
-		top_left_element = self.driver.find_element_by_tag_name('html')
 		actions = ActionChains(self.driver)
-		actions.move_to_element_with_offset(top_left_element, *coords)
+		actions.move_by_offset(*coords)
 		actions.click()
+		actions.move_by_offset(-coords[0], -coords[1])
 		actions.perform()
 
 	def is_playing(self):
