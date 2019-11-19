@@ -42,6 +42,7 @@ class WebDriver:
 		uBlock_path = os.path.join(os.path.dirname(os.path.abspath(sys.modules['__main__'].__file__)), 'addons/uBlock0_1.23.1rc1.firefox.signed.xpi')
 		self.driver.install_addon(uBlock_path)
 		self.driver.get(url)
+		time.sleep(3)
 
 	def __del__(self):
 		self.driver.quit()

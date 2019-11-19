@@ -4,7 +4,7 @@ import logging
 
 from webdriver.webdriver import WebDriver, FirefoxLoggigError
 from tools.dummy_tool import DummyTool
-from tools.triangle_detection import TriangleDetector
+from tools.triangle_detection import TriangleDetector, PrintTriangleDetector
 from tools.debug_tool import DebugTool
 import cv2
 
@@ -39,6 +39,7 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 				high_tool = tool
 		try:
 			do, what = high_tool.act(screenshot)
+			logging.info(f'{do} {what}')
 			if do == 'wait':
 				time.sleep(what)
 			elif do == 'click':
@@ -77,17 +78,21 @@ def parse_arguments():
 	parser.add_argument('--triangle_size', type=str, choices=['small','medium','big'], default='medium')
 	parser.add_argument('--patience', type=int, default=3, help='Consecutive times that tools can report as having done nothing')
 	parser.add_argument('--debug', action='store_true')
+	parser.add_argument('--print', action='store_true')
 	return vars(parser.parse_args())
 	
 
-def set_up_tools(binarization: str, triangle_size: str, debug: bool, **kwargs):
+def set_up_tools(binarization: str, triangle_size: str, debug: bool, print: bool, **kwargs):
 	tools = []
 	if debug:
 		logging.info('Debug mode --- Loading only Debug Tool')
 		tools.append(DebugTool())
+	elif print:
+		tools.append(PrintTriangleDetector(binarization, triangle_size))
+		kwargs['patience'] = -1
 	else:
-		tools.append(DummyTool())
 		tools.append(TriangleDetector(binarization, triangle_size))
+
 	kwargs['tools'] = tools
 	return kwargs
 
