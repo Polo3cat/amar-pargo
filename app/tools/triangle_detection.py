@@ -1,5 +1,10 @@
 from math import sqrt
+import pickle
+import os
+import sys
+
 import cv2
+import numpy as np
 
 from .tool import NothingError, Tool
 
@@ -28,19 +33,15 @@ class TriangleDetector(Tool):
 		else:
 			raise BinarizationMethodError()
 
-		if triangle_size == 'small':
-			self.triangle_size = 1/6
-		elif triangle_size == 'medium':
-			self.triangle_size = 3/6
-		elif triangle_size == 'big':
-			self.triangle_size = 5/6
-		else:
-			raise TriangleSizeError()
-		self.area_epsilon = 1/6
+		triangle_detector_data = os.path.dirname(os.path.abspath(sys.modules[__name__].__file__))
+		with open(os.path.join(triangle_detector_data, 'triangle_detection_data/gmm_triangle_area_model.pkl'), 'rb') as f:
+			self.gmm_triangle_area = pickle.load(f)
+		means_ = list(enumerate(self.gmm_triangle_area.means_))
+		means_ = [x[0] for x in sorted(means_, key=lambda x: x[1])]
+		self.triangle_size_class = dict(zip(['small', 'medium', 'big'], means_))[triangle_size]
 
 
 	def best_softmaxed_triangle(self, screenshot):
-		area_epsilon = self.area_epsilon
 		total_area = len(screenshot) * len(screenshot[0])
 
 		blur = cv2.medianBlur(screenshot, 5)
@@ -56,9 +57,8 @@ class TriangleDetector(Tool):
 				too_small += 1
 				continue
 
-			area_ratio = area/total_area
-			if area_ratio > self.triangle_size + area_epsilon or area_ratio < self.triangle_size - area_epsilon:
-				bad_ratio += 1
+			area_class = self.gmm_triangle_area.predict(np.array(area).reshape(-1,1))
+			if area_class != self.triangle_size_class:
 				continue
 
 			difference = 0
@@ -116,7 +116,6 @@ class PrintTriangleDetector(TriangleDetector):
 		super().__init__(*args, **kwargs)
 
 	def best_softmaxed_triangle(self, screenshot):
-		area_epsilon = self.area_epsilon
 		total_area = len(screenshot) * len(screenshot[0])
 
 		blur = cv2.medianBlur(screenshot, 5)
@@ -133,9 +132,8 @@ class PrintTriangleDetector(TriangleDetector):
 				too_small += 1
 				continue
 
-			area_ratio = area/total_area
-			if area_ratio > self.triangle_size + area_epsilon or area_ratio < self.triangle_size - area_epsilon:
-				bad_ratio += 1
+			area_class = self.gmm_triangle_area.predict(np.array(area).reshape(-1,1))
+			if area_class != self.triangle_size_class:
 				continue
 
 			difference = 0
