@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import argparse
 import time
 import logging
+import tkMessageBox
 
 from webdriver.webdriver import WebDriver, FirefoxLoggigError
 from tools.dummy_tool import DummyTool
@@ -10,12 +14,10 @@ import cv2
 
 from tools.tool import NothingError
 
-
 FORMAT = '%(levelname)s %(asctime)s (%(module)s:%(lineno)d) %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
-
-def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
+def main(url , buffer_time, tools, patience, **kwargs):
 	"""
 		Orchestrates the pipeline responsible for playing and detecting a video playing
 	"""
@@ -39,7 +41,7 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 				high_tool = tool
 		try:
 			do, what = high_tool.act(screenshot)
-			logging.info(f'{do} {what}')
+			#logging.info(f'{do} {what}')
 			if do == 'wait':
 				time.sleep(what)
 			elif do == 'click':
@@ -62,8 +64,14 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 
 	if give_up:
 		logging.info('We gave up')
+		window.attributes("-topmost", False)
+		tkMessageBox.showinfo('We gave up...', message)
+		window.attributes("-topmost", True)
 	if playing:
-		logging.info(f'The video is very likely playing from {playing}')
+		logging.info('The video is very likely playing from {playing}')
+		window.attributes("-topmost", False)
+		tkMessageBox.showinfo('The video is very likely playing from {playing}', message)
+		window.attributes("-topmost", True)
 
 
 def parse_arguments():
@@ -82,12 +90,12 @@ def parse_arguments():
 	return vars(parser.parse_args())
 	
 
-def set_up_tools(binarization: str, triangle_size: str, debug: bool, print: bool, **kwargs):
+def set_up_tools(binarization, triangle_size, debug, print_a, **kwargs):
 	tools = []
 	if debug:
 		logging.info('Debug mode --- Loading only Debug Tool')
 		tools.append(DebugTool())
-	elif print:
+	elif print_a:
 		tools.append(PrintTriangleDetector(binarization, triangle_size))
 		kwargs['patience'] = -1
 	else:
