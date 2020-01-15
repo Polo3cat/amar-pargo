@@ -120,9 +120,30 @@ class PrintTriangleDetector(TriangleDetector):
 
 		blur = cv2.medianBlur(screenshot, 5)
 		threshold = self.threshold(blur)
-		cv2.imwrite('thresh.png', threshold)
+		cv2.imwrite('screenshot.png', screenshot)
+		cv2.imwrite('threshold.png', threshold)
 		contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+		img1 = screenshot.copy()
+		img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
+		img1 = cv2.drawContours(img1, contours, -1, (0,255,0), 2)
+		cv2.imwrite('contours.png', img1)
+
 		areas, triangles = zip(*[cv2.minEnclosingTriangle(c) for c in contours])
+
+		img1 = screenshot.copy()
+		img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
+		color = (0,0,255)
+		for triangle in triangles:
+			p1 = (triangle[0,0,0],triangle[0,0,1])
+			p2 = (triangle[1,0,0],triangle[1,0,1])
+			p3 = (triangle[2,0,0],triangle[2,0,1])
+			cv2.line(img1, p1,p2, color,2)
+			cv2.line(img1, p2,p3, color,2)
+			cv2.line(img1, p3,p1, color,2)
+
+		cv2.imwrite('triangles.png', img1)
+
 		too_small = 0
 		bad_ratio = 0
 		bad_shape = 0
@@ -153,23 +174,28 @@ class PrintTriangleDetector(TriangleDetector):
 				continue
 
 			filtered_triangles.append((triangle, difference))
-		total = sum((difference for _,difference in filtered_triangles))
-		softmaxed = [(triangle, difference/(total+1)) for triangle,difference in filtered_triangles]
+		total = sum((difference for _,difference in filtered_triangles)) + 1
+		softmaxed = [(triangle, difference/total) for triangle,difference in filtered_triangles]
+
+		img1 = screenshot.copy()
+		img1 = cv2.cvtColor(img1, cv2.COLOR_GRAY2BGR)
+		color = (0,0,255)
 		for triangle, score in softmaxed:
 			p1 = (triangle[0,0,0],triangle[0,0,1])
 			p2 = (triangle[1,0,0],triangle[1,0,1])
 			p3 = (triangle[2,0,0],triangle[2,0,1])
-			center = (p3[0] - (p3[0]-p1[0])/2 , p2[1] - (p2[1]-p1[1])/2)
-			cv2.circle(screenshot, p1, 5, (255,0,0), -1)
-			cv2.circle(screenshot, p2, 5, (0,255,0), -1)
-			cv2.circle(screenshot, p3, 5, (0,0,255), -1)
-			cv2.putText(screenshot, f'{score:.4f}', tuple(map(int, center)), cv2. FONT_HERSHEY_SIMPLEX, 1, (255,255,0))
-		cv2.imwrite('test.png', screenshot)
+			cv2.line(img1, p1,p2, color,2)
+			cv2.line(img1, p2,p3, color,2)
+			cv2.line(img1, p3,p1, color,2)
+			cv2.putText(img1, f'{score:.3f}', p3, cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2, cv2.LINE_AA)
+
+		cv2.imwrite('filtered_triangles.png', img1)
 
 		try:
 			return min(softmaxed, key=lambda x: x[1])
 		except ValueError:
 			return (None, 1)
+
 
 	def evaluate(self, screenshot):
 		"""

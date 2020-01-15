@@ -15,7 +15,7 @@ FORMAT = '%(levelname)s %(asctime)s (%(module)s:%(lineno)d) %(message)s'
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
-def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
+def main(url: str, buffer_time: int, tools: list, patience: int, presentation: bool, **kwargs):
 	"""
 		Orchestrates the pipeline responsible for playing and detecting a video playing
 	"""
@@ -64,6 +64,10 @@ def main(url: str, buffer_time: int, tools: list, patience: int, **kwargs):
 		logging.info('We gave up')
 	if playing:
 		logging.info(f'The video is very likely playing from {playing}')
+	if presentation:
+		logging.info('Presentation mode on, waiting for SIGKILL [Ctrl+C]')
+		while True:
+			pass
 
 
 def parse_arguments():
@@ -77,6 +81,7 @@ def parse_arguments():
 						help='gt: Global Thresholding\namt: Adaptive Mean Thresholding\nagt: Adaptive Gaussian Thresholding')
 	parser.add_argument('--triangle_size', type=str, choices=['small','medium','big'], default='medium')
 	parser.add_argument('--patience', type=int, default=3, help='Consecutive times that tools can report as having done nothing')
+	parser.add_argument('--presentation', action='store_true', help='One click and leave playing')
 	parser.add_argument('--debug', action='store_true')
 	parser.add_argument('--print', action='store_true')
 	return vars(parser.parse_args())
