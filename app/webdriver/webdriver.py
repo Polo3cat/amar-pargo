@@ -85,6 +85,9 @@ class WebDriver:
 			elif youtube_match:
 				youtube_id_regex = re.compile(r'video_id=(?P<youtube_id>(\w|_)+)&')
 				youtube_id_match = youtube_id_regex.search(log)
-				youtube_id = youtube_id_match.group('youtube_id')
+				if youtube_id_match:
+					youtube_id = youtube_id_match.group('youtube_id')
+				else:
+					return ''
 				return f'https://www.youtube.com/watch?v={youtube_id}'
 		return False
